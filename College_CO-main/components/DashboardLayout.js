@@ -54,7 +54,7 @@ const menuItems = {
   ],
   faculty: [
     { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
-    { text: 'My Subjects', icon: <School />, path: '/subjects' },
+    { text: 'My Subject', icon: <School />, path: '/subjects' },
     { text: 'Enter Marks', icon: <Assignment />, path: '/marks' },
     { text: 'Analytics', icon: <Analytics />, path: '/analytics' }
   ]
