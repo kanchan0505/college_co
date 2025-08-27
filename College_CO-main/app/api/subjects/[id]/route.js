@@ -36,3 +36,36 @@ export async function PUT(request, { params }) {
     return NextResponse.json({ error: "Failed to update subject" }, { status: 500 });
   }
 }
+
+export async function DELETE(request, { params }) {
+  try {
+    const token = getTokenFromRequest(request);
+    const decoded = verifyToken(token);
+
+    if (!decoded || !["admin", "hod"].includes(decoded.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const subjectId = params.id;
+
+    // HOD can only delete subjects in their department
+    if (decoded.role === "hod") {
+      const subjectResult = await query("SELECT department_id FROM subjects WHERE id = $1", [subjectId]);
+      if (!subjectResult.rows[0] || subjectResult.rows[0].department_id !== decoded.department_id) {
+        return NextResponse.json({ error: "Cannot delete subject in other departments" }, { status: 403 });
+      }
+    }
+
+    // Delete dependent rows first
+    await query("DELETE FROM faculty_subjects WHERE subject_id = $1", [subjectId]);
+    await query("DELETE FROM units WHERE subject_id = $1", [subjectId]);
+
+    // Delete the subject
+    await query("DELETE FROM subjects WHERE id = $1", [subjectId]);
+
+    return NextResponse.json({ message: "Subject deleted successfully" });
+  } catch (error) {
+    console.error("Subject deletion error:", error);
+    return NextResponse.json({ error: "Failed to delete subject" }, { status: 500 });
+  }
+}

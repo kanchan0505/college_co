@@ -21,7 +21,7 @@ export async function GET(request) {
 
     // Get students for this subject based on department and semester
     let studentsQuery = `
-      SELECT st.id, st.roll_number, st.name, st.section, st.email,
+      SELECT st.id, st.roll_number, st.name, st.section,
              sm.mst_marks, sm.assignment_marks
       FROM students st
       LEFT JOIN student_marks sm ON st.id = sm.student_id AND sm.unit_id = $2

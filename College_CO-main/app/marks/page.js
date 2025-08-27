@@ -63,6 +63,8 @@ function EnterMarks() {
       const response = await fetch("/api/faculty/my-subjects", {
         headers: { Authorization: `Bearer ${token}` },
       })
+      console.log("Token being sent:", token)
+
       if (response.ok) {
         const data = await response.json()
         setSubjects(data)

@@ -131,14 +131,12 @@ export default function Login() {
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 Demo Credentials:
               </Typography>
-              <Typography variant="caption" display="block">
-                Admin: newadmin@college.edu / admin123
-              </Typography>
+             
               <Typography variant="caption" display="block">
                 HOD: newhod.cse@college.edu / hod123
               </Typography>
               <Typography variant="caption" display="block">
-                Faculty: faculty1.cse@college.edu / faculty123
+                Faculty: faculty01.gmail.com / faculty01
               </Typography>
             </Box>
           </CardContent>

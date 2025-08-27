@@ -470,13 +470,17 @@ const response = await fetch(url, {
                   onChange={(e) => setAssignmentData({ ...assignmentData, subject_id: e.target.value })}
                   label="Subject"
                 >
-                  {subjects
-                    .filter((subject) => subject.department_id === selectedFaculty?.department_id)
-                    .map((subject) => (
-                      <MenuItem key={subject.id} value={subject.id}>
-                        {subject.name} ({subject.code})
-                      </MenuItem>
-                    ))}
+                 {subjects
+  .filter((subject) => 
+    subject.department_id === selectedFaculty?.department_id &&
+    !selectedFaculty.assignments?.some(a => a.subject_id === subject.id)
+  )
+  .map((subject) => (
+    <MenuItem key={subject.id} value={subject.id}>
+      {subject.name} ({subject.code})
+    </MenuItem>
+  ))}
+
                 </Select>
               </FormControl>
               <Box display="flex" gap={2}>

@@ -179,20 +179,30 @@ const handleSaveUnits = async () => {
     })
   }
 }
-
+ const handleOpenDialog = () => {
+    setFormData({
+      name: "",
+      code: "",
+      department_id: user?.role === "hod" ? user.department_id : "",
+      semester: 1,
+      credits: 3,
+    });
+    setEditingSubject(null);
+    setOpenDialog(true);
+  };
 
   const handleEdit = (subject) => {
-    setEditingSubject(subject)
-    setFormData({
-      name: subject.name,
-      code: subject.code,
-      department_id: subject.department_id,
-      semester: subject.semester,
-      credits: subject.credits,
-   
-    })
-    setOpenDialog(true)
-  }
+  setEditingSubject(subject)
+  setFormData({
+    name: subject.name,
+    code: subject.code,
+    department_id: user?.role === "hod" ? user.department_id : subject.department_id,
+    semester: subject.semester,
+    credits: subject.credits,
+  })
+  setOpenDialog(true)
+}
+
 
   const handleManageUnits = (subject) => {
     setSelectedSubject(subject)
@@ -323,8 +333,9 @@ const handleSaveUnits = async () => {
           <Typography variant="h4" gutterBottom>
             Subjects Management
           </Typography>
-          {(user?.role === "admin" || user?.role === "hod") && (
-            <Button variant="contained" startIcon={<Add />} onClick={() => setOpenDialog(true)}>
+           {(user?.role === "admin" || user?.role === "hod") && (
+            // UPDATE THIS LINE:
+            <Button variant="contained" startIcon={<Add />} onClick={handleOpenDialog}>
               Add Subject
             </Button>
           )}
