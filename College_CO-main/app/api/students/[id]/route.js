@@ -4,7 +4,7 @@ import { verifyToken, getTokenFromRequest } from "../../../lib/auth"
 import { NextResponse } from "next/server"
 
 
-export async function PUT(request) {
+export async function PUT(request, { params }) {
   try {
     const token = getTokenFromRequest(request)
     const decoded = verifyToken(token)
@@ -13,32 +13,35 @@ export async function PUT(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Extract ID from URL
-    const url = new URL(request.url)
-    const id = url.pathname.split("/").pop()
+    const { id } = params
+    if (!id) return NextResponse.json({ error: "Missing student ID" }, { status: 400 })
 
-    if (!id) {
-      return NextResponse.json({ error: "Missing student ID" }, { status: 400 })
+    // Expect body to include only: roll_number, name, semester, section, batch_year
+    const { roll_number, name, semester, section, batch_year } = await request.json()
+
+    if (!roll_number || !name || !semester || !section || !batch_year) {
+      return NextResponse.json({ error: "All fields are required" }, { status: 400 })
     }
 
-    const { roll_number, name, department_id, semester, section, batch_year } = await request.json()
-
-    // HOD restriction: can only update students in their own department
+    // If HOD, ensure student belongs to their department
     if (decoded.role === "hod") {
       const student = await query("SELECT department_id FROM students WHERE id = $1", [id])
-      if (student.rows.length === 0 || student.rows[0].department_id !== decoded.department_id) {
+      if (student.rows.length === 0) {
+        return NextResponse.json({ error: "Student not found" }, { status: 404 })
+      }
+      if (student.rows[0].department_id !== decoded.department_id) {
         return NextResponse.json({ error: "Cannot update student from other departments" }, { status: 403 })
       }
     }
 
+    // Update WITHOUT touching department_id (per your request) and WITHOUT email field
     const result = await query(
-  `UPDATE students 
-   SET roll_number=$1, name=$2, department_id=$3, semester=$4, section=$5, batch_year=$6
-   WHERE id=$7
-   RETURNING *`,
-  [roll_number, name, department_id, semester, section, batch_year, id],
-)
-
+      `UPDATE students
+       SET roll_number=$1, name=$2, semester=$3, section=$4, batch_year=$5
+       WHERE id=$6
+       RETURNING *`,
+      [roll_number, name, semester, section, batch_year, id],
+    )
 
     if (result.rows.length === 0) {
       return NextResponse.json({ error: "Student not found" }, { status: 404 })

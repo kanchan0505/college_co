@@ -14,19 +14,16 @@ export async function GET(request) {
     let whereClause = ""
     let params = []
 
-    // Filter based on user role
-    if (decoded.role === "hod") {
-      whereClause = "WHERE s.department_id = $1"
-      params = [decoded.department_id]
-    } else if (decoded.role === "faculty") {
+    // Filter based on role (HOD & faculty see their department only)
+    if (decoded.role === "hod" || decoded.role === "faculty") {
       whereClause = "WHERE s.department_id = $1"
       params = [decoded.department_id]
     }
 
     const result = await query(
-      `SELECT s.*, d.name as department_name 
-       FROM students s 
-       LEFT JOIN departments d ON s.department_id = d.id 
+      `SELECT s.*, d.name as department_name
+       FROM students s
+       LEFT JOIN departments d ON s.department_id = d.id
        ${whereClause}
        ORDER BY s.roll_number`,
       params,
@@ -48,21 +45,24 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { roll_number, name,  department_id, semester, section, batch_year } = await request.json()
+    // Expect: roll_number, name, semester, section, batch_year
+    const { roll_number, name, semester, section, batch_year, department_id } = await request.json()
 
-    // Check if HOD is trying to add student to their department
-    if (decoded.role === "hod" && department_id !== decoded.department_id) {
-      return NextResponse.json({ error: "Cannot add student to other departments" }, { status: 403 })
+    if (!roll_number || !name || !semester || !section || !batch_year) {
+      return NextResponse.json({ error: "All fields are required" }, { status: 400 })
     }
 
+    // If HOD, force department from token; admin may provide department_id
+    const finalDepartmentId = decoded.role === "hod" ? decoded.department_id : department_id
+
     const result = await query(
-      `INSERT INTO students (roll_number, name,  department_id, semester, section, batch_year)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO students (roll_number, name, department_id, semester, section, batch_year)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
-      [roll_number, name,  department_id, semester, section, batch_year],
+      [roll_number, name, finalDepartmentId, semester, section, batch_year],
     )
 
-    return NextResponse.json(result.rows[0])
+    return NextResponse.json(result.rows[0], { status: 201 })
   } catch (error) {
     console.error("Student creation error:", error)
     return NextResponse.json({ error: "Failed to create student" }, { status: 500 })
